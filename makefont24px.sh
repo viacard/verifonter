@@ -73,10 +73,13 @@ cp -f /dev/null $HEXFILE
 col=1
 while true
 do
-	byte1=$(cat $TMPFILE | cut -c$col | head -8 | tr -dc '01')
-	byte2=$(cat $TMPFILE | cut -c$col | head -16 | tail -8 | tr -dc '01')
-	byte3=$(cat $TMPFILE | cut -c$col | tail -8 | tr -dc '01')
+	byte1=$(cat $TMPFILE | cut -c$col | head -8 | tr -dc '01' | rev)
+	byte2=$(cat $TMPFILE | cut -c$col | head -16 | tail -8 | tr -dc '01' | rev)
+	byte3=$(cat $TMPFILE | cut -c$col | tail -8 | tr -dc '01' | rev)
+	# break out if all coluns are processed
 	if [ "$byte1$byte2$byte3" == "" ]; then break; fi
+	# if only the bottommost pixel is set then this is the space character
+	if [ "$byte1$byte2$byte3" == "000000000000000010000000" ]; then byte3="00000000"; fi
 	printf '%02x %02x %02x\n' "$((2#$byte1))" "$((2#$byte2))" "$((2#$byte3))" >> $HEXFILE
 	col=$((col+1))
 	if [ "$(($col%$CHARWIDTH))" == "0" ];then >&2 printf 'Converting image data for character %d/128\r' $(($col/$CHARWIDTH)); fi
